@@ -41,7 +41,6 @@ function callback(results, status) {
 function codeAddress() {
   var address = 'toronto';
   geocoder.geocode({ address: address }, function (results, status) {
-    print(results);
     if (status == 'OK') {
       map.setCenter(results[0].geometry.location);
       /* marker on current position
