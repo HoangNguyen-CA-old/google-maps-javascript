@@ -2,19 +2,23 @@
 // parameter when you first load the API. For example:
 // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
 
-var map;
-var service;
+let map;
+let service;
 let geocoder;
+let directionsService;
+let directionsRenderer;
 
 function initMap() {
+  directionsService = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer();
   geocoder = new google.maps.Geocoder();
-  var start = new google.maps.LatLng(0, 0);
-  codeAddress();
+  let start = new google.maps.LatLng(56.1304, -106.3468);
 
   map = new google.maps.Map(document.getElementById('map'), {
     center: start,
-    zoom: 13,
+    zoom: 4,
   });
+  directionsRenderer.setMap(map);
 
   let startInput = document.getElementById('start__input');
   let endInput = document.getElementById('end__input');
@@ -40,7 +44,22 @@ function initMap() {
   destinationSubmit.addEventListener('click', () => {
     startPlace = startAutocomplete.getPlace();
     endPlace = endAutocomplete.getPlace();
-    console.log(startPlace, endPlace);
+    let request = {
+      origin: startPlace.geometry.location,
+      destination: endPlace.geometry.location,
+      travelMode: 'DRIVING',
+    };
+    directionsService.route(request, function (result, status) {
+      if (status == 'OK') {
+        directionsRenderer.setDirections(result);
+      } else {
+        alert(
+          'Directions service was not successful for the following reason: ' +
+            status
+        );
+      }
+    });
+
     createMarker(startPlace);
     createMarker(endPlace);
   });
