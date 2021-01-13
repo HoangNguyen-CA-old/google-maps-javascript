@@ -2,21 +2,38 @@
 // parameter when you first load the API. For example:
 // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
 
+/*
+GEOCODING EXAMPLE
+geocoder = new google.maps.Geocoder();
+
+
+function codeAddress(address) {
+  geocoder.geocode({ address: address }, codeAddressCallback);
+}
+
+function codeAddressCallback(results, status) {
+  if (status == 'OK') {
+    map.setCenter(results[0].geometry.location);
+  } else {
+    alert('Geocode was not successful for the following reason: ' + status);
+  }
+}
+*/
+
 let map;
 let placeService;
 let distanceMatrixService;
-let geocoder;
 let directionsService;
 let directionsRenderer;
 let startPlace;
 let endPlace;
+let gasItemsArray = [];
 
 function initMap() {
   directionsService = new google.maps.DirectionsService();
   directionsRenderer = new google.maps.DirectionsRenderer();
   distanceMatrixService = new google.maps.DistanceMatrixService();
 
-  geocoder = new google.maps.Geocoder();
   let start = new google.maps.LatLng(56.1304, -106.3468);
 
   map = new google.maps.Map(document.getElementById('map'), {
@@ -55,6 +72,9 @@ function initMap() {
 
     placeService.nearbySearch(searchRequest, nearbySearchCallback);
 
+    /*
+      Render the directions
+    */
     let directionsRequest = {
       origin: startPlace.geometry.location,
       destination: endPlace.geometry.location,
@@ -85,24 +105,10 @@ function createMarker(place) {
   });
 }
 
-function codeAddress() {
-  var address = 'toronto';
-  geocoder.geocode({ address: address }, codeAddressCallback);
-}
-
-function codeAddressCallback(results, status) {
-  if (status == 'OK') {
-    map.setCenter(results[0].geometry.location);
-  } else {
-    alert('Geocode was not successful for the following reason: ' + status);
-  }
-}
-
 function nearbySearchCallback(results, status) {
   if (status == google.maps.places.PlacesServiceStatus.OK) {
     for (var i = 0; i < results.length; i++) {
       var place = results[i];
-      createMarker(place);
     }
 
     /*
@@ -223,19 +229,61 @@ function renderGasStations(distanceValues) {
   let sorted = distanceValues.sort((a, b) => a.totalDistance - b.totalDistance);
 
   console.log(sorted);
-  text = '';
+  gasItemsArray = [];
 
   for (item of sorted) {
-    text += `<div class="gas__item">
+    let address = item.address;
+    let gasItem = document.createElement('div');
+    gasItem.classList.add('gas__item');
+    gasItem.innerHTML = `
     <h3 class="gas__item__title">${item.address}</h3>
-    <p>
+    <p class="gas__item__label">
       total distance = ${item.totalDistance} meters
       </p>
-      <p>
+      <p class="gas__item__label">
       total duration = ${item.totalDuration} seconds
       </p>
-      <button>Add To Route</button>
-    </div>`;
+    `;
+
+    let buttonItem = document.createElement('button');
+    buttonItem.classList.add('button');
+    buttonItem.classList.add('gas__item__button');
+    buttonItem.innerText = 'Add To Route';
+
+    buttonItem.addEventListener('click', () => {
+      clearGasItemsHighlight();
+      gasItem.classList.add('gas__item--highlighted');
+      addToRoute(address);
+    });
+
+    gasItemsArray.push(gasItem);
+    gasItem.appendChild(buttonItem);
+    gasDisplay.appendChild(gasItem);
   }
-  gasDisplay.innerHTML = text;
+}
+
+function addToRoute(address) {
+  console.log(address);
+  let directionsRequest = {
+    origin: startPlace.geometry.location,
+    waypoints: [{ location: address, stopover: true }],
+    destination: endPlace.geometry.location,
+    travelMode: 'DRIVING',
+  };
+  directionsService.route(directionsRequest, function (result, status) {
+    if (status == 'OK') {
+      directionsRenderer.setDirections(result);
+    } else {
+      alert(
+        'Directions service was not successful for the following reason: ' +
+          status
+      );
+    }
+  });
+}
+
+function clearGasItemsHighlight() {
+  for (item of gasItemsArray) {
+    item.classList.remove('gas__item--highlighted');
+  }
 }
