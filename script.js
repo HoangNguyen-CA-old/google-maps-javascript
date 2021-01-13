@@ -130,20 +130,112 @@ function nearbySearchCallback(results, status) {
       distanceMatrixCallback1
     );
 
-    distanceMatrixService.getDistanceMatrix(
-      distanceMatrixReq2,
-      distanceMatrixCallback2
-    );
+    //key is address of gas station
+    distanceDictionary = {};
+
     function distanceMatrixCallback1(results, status) {
-      console.log(results);
+      if (status == 'OK') {
+        let res = parseDistanceMatrix(results);
+        console.log(res);
+
+        // add response to distanceDictionary
+        for (item of res) {
+          distanceDictionary[item.to] = {
+            address: item.to,
+            distanceTo: item.distance,
+            durationTo: item.duration,
+          };
+        }
+
+        distanceMatrixService.getDistanceMatrix(
+          distanceMatrixReq2,
+          distanceMatrixCallback2
+        );
+      } else {
+        alert(
+          'distance matrix was not successful for the following reason: ' +
+            status
+        );
+      }
     }
 
     function distanceMatrixCallback2(results, status) {
-      console.log(results);
+      if (status == 'OK') {
+        let res = parseDistanceMatrix(results);
+        console.log(res);
+
+        let updatedDict = { ...distanceDictionary };
+
+        for (item of res) {
+          prevDistance = distanceDictionary[item.from].distanceTo;
+          prevDuration = distanceDictionary[item.from].durationTo;
+          updatedDict[item.from] = {
+            ...distanceDictionary[item.from],
+            distanceFrom: item.distance,
+            durationFrom: item.duration,
+            totalDistance: item.distance + prevDistance,
+            totalDuration: item.duration + prevDuration,
+          };
+        }
+        distanceDictionary = updatedDict;
+
+        console.log(distanceDictionary);
+        renderGasStations(Object.values(distanceDictionary));
+      } else {
+        alert(
+          'distance matrix was not successful for the following reason: ' +
+            status
+        );
+      }
     }
   } else {
     alert(
       'nearby search was not successful for the following reason: ' + status
     );
   }
+}
+
+// helper function to parse  data from direction matrix responses
+function parseDistanceMatrix(response) {
+  var origins = response.originAddresses;
+  var destinations = response.destinationAddresses;
+
+  let ansArr = [];
+  for (var i = 0; i < origins.length; i++) {
+    var results = response.rows[i].elements;
+    for (var j = 0; j < results.length; j++) {
+      var element = results[j];
+      ans = {};
+      ans.distanceText = element.distance.text;
+      ans.durationText = element.duration.text;
+      ans.distance = element.distance.value; // in meters
+      ans.duration = element.duration.value; // in second
+      ans.from = origins[i];
+      ans.to = destinations[j];
+      ansArr.push(ans);
+    }
+  }
+  return ansArr;
+}
+
+gasDisplay = document.getElementById('gasDisplay');
+function renderGasStations(distanceValues) {
+  let sorted = distanceValues.sort((a, b) => a.totalDistance - b.totalDistance);
+
+  console.log(sorted);
+  text = '';
+
+  for (item of sorted) {
+    text += `<div class="gas__item">
+    <h3 class="gas__item__title">${item.address}</h3>
+    <p>
+      total distance = ${item.totalDistance} meters
+      </p>
+      <p>
+      total duration = ${item.totalDuration} seconds
+      </p>
+      <button>Add To Route</button>
+    </div>`;
+  }
+  gasDisplay.innerHTML = text;
 }

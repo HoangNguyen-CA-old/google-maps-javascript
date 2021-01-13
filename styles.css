@@ -54,4 +54,17 @@ main {
   display: block;
 }
 
+#gasDisplay {
+}
+
+.gas__item {
+  border: 1px solid black;
+  margin: 1em 0;
+}
+
+.gas__item__title {
+  font-size: 1.2rem;
+  font-weight: regular;
+}
+
 /* Optional: Makes the sample page fill the window. */
