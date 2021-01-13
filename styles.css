@@ -4,8 +4,7 @@
   box-sizing: border-box;
 }
 #map {
-  height: 95vh;
-  margin: 1em;
+  height: 100vh;
   width: 100%;
 }
 html {
@@ -29,6 +28,8 @@ main {
   flex-direction: column;
   border: 2px solid black;
   width: 30%;
+  height: 100vh;
+  overflow: auto;
 }
 
 .sidebar__header {
@@ -125,7 +126,6 @@ button:hover {
 
 .gas__item__button {
   text-transform: uppercase;
-  padding: ;
 }
 
 /* Optional: Makes the sample page fill the window. */
