@@ -238,10 +238,10 @@ function renderGasStations(distanceValues) {
     gasItem.innerHTML = `
     <h3 class="gas__item__title">${item.address}</h3>
     <p class="gas__item__label">
-      total distance = ${item.totalDistance} meters
+      total distance = ${(item.totalDistance / 1000).toFixed(1)} km
       </p>
       <p class="gas__item__label">
-      total duration = ${item.totalDuration} seconds
+      total duration = ${(item.totalDuration / 60).toFixed(1)} minutes
       </p>
     `;
 
